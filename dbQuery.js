@@ -29,8 +29,8 @@ module.exports={
 
     query3:()=>{
        return bettleModel.aggregate([
-        {"$group" : {_id:"$attacker_outcome", count:{$sum:1}}},
-           { $unwind : "$_id" },
+        {"$group" : {_id:"$attacker_outcome", count:{$sum:1}}}
+          
 
     ])
 
