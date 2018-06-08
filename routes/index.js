@@ -3,6 +3,94 @@ const fs = require('fs');
 const csv = require('fast-csv');
 const bettleModel= require('../models/battle.model');
 const dbQuery=require('../dbQuery');
+const userModel= require('../models/user.model');// jwt tokan purpose
+const jwt    = require('jsonwebtoken');
+const config= require('../config');
+
+
+
+
+routes.post('/signup',((req,res)=>{
+
+    if(!req.body.name || !req.body.password){
+        res.status(500).json({'message':'mandatory fields are missing'});
+    }
+    else {
+        const newUser = {
+            'name': req.body.name,
+            'password': req.body.password
+        }
+
+        var newuser = new userModel(newUser)
+        newuser.save(((error,data) => {
+            if (error) {
+                res.status(500).json({'message': 'server side error'})
+            } else {
+                console.log(data.name)
+                const payload = {admin: data.name};
+
+                var token = jwt.sign(payload, config.secret);
+                res.json({success: true, message: 'Enjoy your token!', token: token});
+            }
+
+        }))
+
+    }
+}))
+
+
+routes.post('/signin',((req,res)=>{
+    console.log(req.body);
+    userModel.findOne({'name':req.body.name,'password':req.body.password},(error,user)=>{
+        if(error){
+            res.status(500).json({'message':'server side error'});
+        }
+        else if(user){
+            const payload = {admin: user};
+
+            var token = jwt.sign(payload, config.secret);
+            res.json({success: true, message: 'Enjoy your token!', token: token});
+        }
+        else{
+            res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+        }
+    })
+}))
+
+//protecting app routes
+
+
+routes.use(function(req, res, next) {
+
+    // check header or url parameters or post parameters for token
+    var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+    // decode token
+    if (token) {
+
+        // verifies secret and checks exp
+        jwt.verify(token, config.secret, function(err, decoded) {
+            if (err) {
+                return res.json({ success: false, message: 'Failed to authenticate token.' });
+            } else {
+                // if everything is good, save to request for use in other routes
+                req.decoded = decoded;
+                next();
+            }
+        });
+
+    } else {
+
+        // if there is no token
+        // return an error
+        return res.status(403).send({
+            success: false,
+            message: 'No token provided.'
+        });
+
+    }
+})
+
 
 //reading csv file data and insert in to the db
 routes.get('/readCsvFileAndInsert',((req,res)=>{
@@ -74,8 +162,9 @@ routes.get('/status',((req,res)=>{
 
         Promise.all(promiseArry).then((result)=> {
 
-            // most_active=most_active.filter(function(e){return e});
-            let finalOutput =
+
+                // most_active=most_active.filter(function(e){return e});
+                let finalOutput =
                     {
                         'most_active': {
                             'attacker_king': result[0][0].attacker_king,
@@ -83,17 +172,23 @@ routes.get('/status',((req,res)=>{
                             'region': result[0][0].region,
                             'name': result[0][0].name,
                         },
-                       'battle_type':result[1].filter(function(e){return e}),
-                 //'attacker_size':
+                        'battle_type': result[1].filter(function (e) {
+                            return e
+                        }),
+                        //'attacker_size':
 
-           'attacker_size': {'avg':result[0][0].average,'max':result[0][0].max,
-               'min':result[0][0].min},
+                        'attacker_size': {
+                            'avg': result[0][0].average, 'max': result[0][0].max,
+                            'min': result[0][0].min
+                        },
 
-                        'attacker_outcomes':result[2].map(obj =>{
-                var rObj = {};
-                rObj[obj._id] = obj.count;
-                return rObj;})
-        }
+                        'attacker_outcomes': result[2].map(obj => {
+                            var rObj = {};
+                            rObj[obj._id] = obj.count;
+                            return rObj;
+                        })
+                    }
+
 
           //console.log(finalOutput)
             res.json({'status':200,'message':'success',finalOutput});

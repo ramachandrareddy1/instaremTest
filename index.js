@@ -2,21 +2,23 @@ var express= require('express');
 var app= express();
 var config=require('./config');
 var mongoose= require('mongoose');
+var jwt    = require('jsonwebtoken');
+var routes = require('./routes');
 
-const routes = require('./routes');
-
+var fs=require('fs');
 //  Connect all our routes to our application
-app.use('/', routes);
+
 
 
 var bodyParser =require('body-parser');
 
-
+ // secret variable
 app.use(bodyParser.json());
 //support parsing of application/x-www-form-urlencoded post data
 app.use(bodyParser.urlencoded({ extended: true }))
+app.set('superSecret', config.secret);
 
-
+app.use('/', routes);
 
 mongoose.connect(config.dbUrl,(error)=>{
     if(error){
