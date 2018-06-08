@@ -82,9 +82,8 @@ routes.get('/status',((req,res)=>{
                             'defender_king': result[0][0].defender_king,
                             'region': result[0][0].region,
                             'name': result[0][0].name,
-                        }
-                    ,
-                'battle_type':result[1].filter(function(e){return e}),
+                        },
+                       'battle_type':result[1].filter(function(e){return e}),
                  //'attacker_size':
 
            'attacker_size': {'avg':result[0][0].average,'max':result[0][0].max,
@@ -96,8 +95,8 @@ routes.get('/status',((req,res)=>{
                 return rObj;})
         }
 
-          console.log(finalOutput)
-            res.json({'status':200,'message':'success',result});
+          //console.log(finalOutput)
+            res.json({'status':200,'message':'success',finalOutput});
         })
         .catch((error)=>{
         console.log(error);
