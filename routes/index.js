@@ -60,10 +60,10 @@ routes.post('/signin',((req,res)=>{
 //protecting app routes
 
 
-routes.use(function(req, res, next) {
+routes.use((req, res, next)=> {
 
     // check header or url parameters or post parameters for token
-    var token = req.body.token || req.query.token || req.headers['x-access-token'];
+    const token = req.body.token || req.query.token || req.headers['x-access-token'];
 
     // decode token
     if (token) {
